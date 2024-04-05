@@ -190,15 +190,68 @@ static void event_handler_wifi(void* arg, esp_event_base_t event_base,
 void monitor_ph(void * pvParams) {
     ESP_LOGI(TAG2, "Entered monitor_ph FN\n");
 
-    for (BaseType_t xi = 0; xi< 10; xi++) {
-        ESP_LOGI(TAG2, "Checking PH.\n");
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
+    //-------------ADC1 Init---------------//
+    adc_oneshot_unit_handle_t adc1_handle;
+    adc_oneshot_unit_init_cfg_t init_config1 = {
+        .unit_id = ADC_UNIT_1,
+    };
+    ESP_ERROR_CHECK(adc_oneshot_new_unit(&init_config1, &adc1_handle));
+
+    //-------------ADC1 Config---------------//
+    adc_oneshot_chan_cfg_t config = {
+        .bitwidth = ADC_BITWIDTH_DEFAULT,
+        .atten = EXAMPLE_ADC_ATTEN,
+    };
+    ESP_ERROR_CHECK(adc_oneshot_config_channel(adc1_handle, EXAMPLE_ADC1_CHAN0, &config));
+
+    //-------------ADC1 Calibration Init---------------//
+    adc_cali_handle_t adc1_cali_chan0_handle = NULL;
+    bool do_calibration1_chan0 = example_adc_calibration_init(ADC_UNIT_1, EXAMPLE_ADC1_CHAN0, EXAMPLE_ADC_ATTEN, &adc1_cali_chan0_handle);
+
+
+    while (1) {
+        if (do_calibration1_chan0) {
+            size_t total_avg = 0;
+            size_t total_sum = 0;
+
+            for (size_t i = 0; i<3;i++){
+                size_t sum = 0;
+                    for (size_t k = 0; k<10;k++){
+                        ESP_ERROR_CHECK(adc_oneshot_read(adc1_handle, EXAMPLE_ADC1_CHAN0, &adc_raw[0][0]));
+                        // ESP_LOGI(TAG, "ADC%d Channel[%d] Raw Dataaa: %d", ADC_UNIT_1 + 1, EXAMPLE_ADC1_CHAN0, adc_raw[0][0]);
+                        ESP_ERROR_CHECK(adc_cali_raw_to_voltage(adc1_cali_chan0_handle, adc_raw[0][0], &voltage[0][0]));
+                        // ESP_LOGI(TAG, "ADC%d Channel[%d] Cali Voltageee: %d mV", ADC_UNIT_1 + 1, EXAMPLE_ADC1_CHAN0, voltage[0][0]);
+                        float innerph = 0.007f * (float)voltage[0][0] - 6.192f;
+                        // ESP_LOGI(TAG, "PH is %f", innerph);
+                        sum += voltage[0][0];
+                        vTaskDelay(pdMS_TO_TICKS(1000));
+                    }
+
+                    size_t avg_of_10 = sum / 10;
+                    total_sum += avg_of_10;
+                    ESP_LOGI(TAG, "Avg of 10 is %d mV", avg_of_10);
+                    float avg_of_10_ph = 0.007f * (float)avg_of_10 - 6.192f;
+                    ESP_LOGI(TAG, "Avg of 10 PH is %f", avg_of_10_ph);
+            }
+            total_avg = total_sum / 3;
+            ESP_LOGI(TAG, "Final avg is %d mV", total_avg);
+            float final_ph = 0.007f * (float)total_avg - 6.192f;
+            ESP_LOGI(TAG, "Final PH is %f", final_ph);
+            vTaskDelay(pdMS_TO_TICKS(5000));
+
+    // ATTEN 12
+    // 1456mv ph4
+    // 1874mv ph7
+
+        }
+        vTaskDelay(pdMS_TO_TICKS(1000));
     }
-    for (BaseType_t xi = 0; xi< 10; xi++) {
-        ESP_LOGI(TAG2, "Checking PH again.\n");
-        vTaskDelay( pdMS_TO_TICKS(1000) );
+
+    //Tear Down
+    ESP_ERROR_CHECK(adc_oneshot_del_unit(adc1_handle));
+    if (do_calibration1_chan0) {
+        example_adc_calibration_deinit(adc1_cali_chan0_handle);
     }
-    ESP_LOGI(TAG2, "Done with loop, about to delete task\n");
 
     vTaskDelete(NULL);
 }
@@ -365,20 +418,10 @@ void app_main(void)
 //             float final_ph = 0.007f * (float)total_avg - 6.192f;
 //             ESP_LOGI(TAG, "Final PH is %f", final_ph);
 
-//             // ESP_LOGI(TAG, "Normalized voltage centered at PH 7 = 0 volts: %d", voltage[0][0] - 1875);
-//             // ATTEN 12
-//             // PH 7 = 0 mv
-//             // PH 4 = -419 mv
-//             // PH 8.9 = 346 mv
-//             // ph 6.3 66 sus
 
-
-//             //// tAKE 2 ATTEN 6
-    
-
-//            /// TAKE 3 ATTEN 12
-// // 1456mv ph4
-// // 1874mv ph7
+//     // ATTEN 12
+//     // 1456mv ph4
+//     // 1874mv ph7
 
 
 //         }
@@ -408,9 +451,6 @@ void app_main(void)
 //     if (do_calibration1_chan0) {
 //         example_adc_calibration_deinit(adc1_cali_chan0_handle);
 //     }
-//     // if (do_calibration1_chan1) {
-//     //     example_adc_calibration_deinit(adc1_cali_chan1_handle);
-//     // }
 
 // #if EXAMPLE_USE_ADC2
 //     ESP_ERROR_CHECK(adc_oneshot_del_unit(adc2_handle));
