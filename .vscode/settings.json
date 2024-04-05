@@ -1,0 +1,14 @@
+{
+  "C_Cpp.intelliSenseEngine": "default",
+  "idf.flashType": "UART",
+  "idf.portWin": "COM3",
+  "idf.adapterTargetName": "esp32c3",
+  "idf.openOcdConfigs": [
+    "board/esp32c3-bridge.cfg"
+  ],
+  "files.associations": {
+    "cstdlib": "c",
+    "freertos.h": "c",
+    "string.h": "c"
+  }
+}
