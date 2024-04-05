@@ -208,7 +208,7 @@ void monitor_ph(void * pvParams) {
     adc_cali_handle_t adc1_cali_chan0_handle = NULL;
     bool do_calibration1_chan0 = example_adc_calibration_init(ADC_UNIT_1, EXAMPLE_ADC1_CHAN0, EXAMPLE_ADC_ATTEN, &adc1_cali_chan0_handle);
 
-
+    //-------------Get PH in loop via ADC---------------//
     while (1) {
         if (do_calibration1_chan0) {
             size_t total_avg = 0;
