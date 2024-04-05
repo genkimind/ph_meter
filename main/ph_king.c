@@ -218,25 +218,25 @@ void monitor_ph(void * pvParams) {
                 size_t sum = 0;
                     for (size_t k = 0; k<10;k++){
                         ESP_ERROR_CHECK(adc_oneshot_read(adc1_handle, EXAMPLE_ADC1_CHAN0, &adc_raw[0][0]));
-                        // ESP_LOGI(TAG, "ADC%d Channel[%d] Raw Dataaa: %d", ADC_UNIT_1 + 1, EXAMPLE_ADC1_CHAN0, adc_raw[0][0]);
+                        // ESP_LOGI(TAG2, "ADC%d Channel[%d] Raw Dataaa: %d", ADC_UNIT_1 + 1, EXAMPLE_ADC1_CHAN0, adc_raw[0][0]);
                         ESP_ERROR_CHECK(adc_cali_raw_to_voltage(adc1_cali_chan0_handle, adc_raw[0][0], &voltage[0][0]));
-                        // ESP_LOGI(TAG, "ADC%d Channel[%d] Cali Voltageee: %d mV", ADC_UNIT_1 + 1, EXAMPLE_ADC1_CHAN0, voltage[0][0]);
+                        // ESP_LOGI(TAG2, "ADC%d Channel[%d] Cali Voltageee: %d mV", ADC_UNIT_1 + 1, EXAMPLE_ADC1_CHAN0, voltage[0][0]);
                         float innerph = 0.007f * (float)voltage[0][0] - 6.192f;
-                        // ESP_LOGI(TAG, "PH is %f", innerph);
+                        // ESP_LOGI(TAG2, "PH is %f", innerph);
                         sum += voltage[0][0];
                         vTaskDelay(pdMS_TO_TICKS(1000));
                     }
 
                     size_t avg_of_10 = sum / 10;
                     total_sum += avg_of_10;
-                    ESP_LOGI(TAG, "Avg of 10 is %d mV", avg_of_10);
+                    ESP_LOGI(TAG2, "Avg of 10 is %d mV", avg_of_10);
                     float avg_of_10_ph = 0.007f * (float)avg_of_10 - 6.192f;
-                    ESP_LOGI(TAG, "Avg of 10 PH is %f", avg_of_10_ph);
+                    ESP_LOGI(TAG2, "Avg of 10 PH is %f", avg_of_10_ph);
             }
             total_avg = total_sum / 3;
-            ESP_LOGI(TAG, "Final avg is %d mV", total_avg);
+            ESP_LOGI(TAG2, "Final avg is %d mV", total_avg);
             float final_ph = 0.007f * (float)total_avg - 6.192f;
-            ESP_LOGI(TAG, "Final PH is %f", final_ph);
+            ESP_LOGI(TAG2, "Final PH is %f", final_ph);
             vTaskDelay(pdMS_TO_TICKS(5000));
 
     // ATTEN 12
